@@ -15,8 +15,10 @@ const char index_page[] PROGMEM = R"rawliteral(
 webpage
 )rawliteral";
 
-const int inp1 = 5;
-const int inp2 = 4;
+const int drive = 5;
+const int button = 4;
+
+boolean pressed = false;
 
 void SetupAP();
 void SetupDNS();
@@ -27,104 +29,110 @@ void SetupWebSocketServer();
 void ServeWebPage();
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+void buttonHandler();
 void drive(const char * msg);
 
 void setup()
 {
-	Serial.begin(115200);
+  Serial.begin(115200);
 
-	SetupAP();
-	SetupDNS();
-	SetupWebServer();
-	SetupWebSocketServer();
-	SetupIO();
+  SetupAP();
+  SetupDNS();
+  SetupWebServer();
+  SetupWebSocketServer();
+  SetupIO();
 
 }
 
 void loop() {
-	server.handleClient();
-	webSocket.loop();
+  server.handleClient();
+  webSocket.loop();
+  buttonHandler();
 }
 
 void ServeWebPage() {
-	String s = index_page;
-	server.send(200, "text/html", s);
+  String s = index_page;
+  server.send(200, "text/html", s);
 }
 
 void SetupAP()
 {
-	Serial.print("Setting configuration... ");
-	Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
+  Serial.print("Setting configuration... ");
+  Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
 
-	Serial.print("Setting Access Point... ");
-	Serial.println(WiFi.softAP("Car") ? "Ready" : "Failed!");
+  Serial.print("Setting Access Point... ");
+  Serial.println(WiFi.softAP("Car") ? "Ready" : "Failed!");
 
-	Serial.print("IP address = ");
-	Serial.println(WiFi.softAPIP());
+  Serial.print("IP address = ");
+  Serial.println(WiFi.softAPIP());
 }
 
 void SetupDNS()
 {
-	if (!MDNS.begin("car")) {
-		Serial.println("Error setting up MDNS responder!");
-	}
-	Serial.println("mDNS responder started");
+  if (!MDNS.begin("car")) {
+    Serial.println("Error setting up MDNS responder!");
+  }
+  Serial.println("mDNS responder started");
 }
 
 void SetupWebServer()
 {
-	server.on("/", ServeWebPage);
-	server.begin();
-	Serial.println("HTTP server started");
+  server.on("/", ServeWebPage);
+  server.begin();
+  Serial.println("HTTP server started");
 }
 
 void SetupIO()
 {
-	pinMode(inp1, OUTPUT);
-	pinMode(inp2, OUTPUT);
-	Serial.println("IO Pins setup");
+  pinMode(drive, OUTPUT);
+  pinMode(button, INPUT);
+  Serial.println("IO Pins setup");
 }
 
 void SetupWebSocketServer()
 {
-	webSocket.begin();
-	webSocket.onEvent(webSocketEvent);
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
 {
-	Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
-	switch (type) {
-	case WStype_DISCONNECTED:
-		Serial.printf("[%u] Disconnected!\r\n", num);
-		break;
-	case WStype_CONNECTED:
-		break;
-	case WStype_TEXT:
-		Serial.printf("[%u] get Text: %s\r\n", num, payload);
-		drive((const char *)payload);
-		break;
-	default:
-		Serial.printf("Invalid WStype [%d]\r\n", type);
-		break;
-	}
+  Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
+  switch (type) {
+  case WStype_DISCONNECTED:
+    Serial.printf("[%u] Disconnected!\r\n", num);
+    break;
+  case WStype_CONNECTED:
+    break;
+  case WStype_TEXT:
+    Serial.printf("[%u] get Text: %s\r\n", num, payload);
+    drive((const char *)payload);
+    break;
+  default:
+    Serial.printf("Invalid WStype [%d]\r\n", type);
+    break;
+  }
+}
+
+void buttonHandler(){
+  if(digitalRead(button)==HIGH){
+    pressed=true;
+    drive("drive");
+  }
+  else if(digitalRead(button)==LOW && pressed){
+    pressed=false;
+    drive("stop");
+  }
 }
 
 void drive(const char * msg)
 {
-	if (strcmp(msg, "forward") == 0)
-	{
-		digitalWrite(inp1, HIGH);
-		digitalWrite(inp2, LOW);
-	}
-	else if (strcmp(msg, "reverse") == 0)
-	{
-		digitalWrite(inp1, LOW);
-		digitalWrite(inp2, HIGH);
-	}
-	else if (strcmp(msg, "stop") == 0)
-	{
-		digitalWrite(inp1, LOW);
-		digitalWrite(inp2, LOW);
-	}
+  if (strcmp(msg, "drive") == 0)
+  {
+    digitalWrite(drive, HIGH);
+  }
+  else if (strcmp(msg, "stop") == 0)
+  {
+    digitalWrite(drive, LOW);
+  }
 }
