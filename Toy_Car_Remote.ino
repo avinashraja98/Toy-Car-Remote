@@ -15,8 +15,9 @@ const char index_page[] PROGMEM = R"rawliteral(
 webpage
 )rawliteral";
 
-const int drive = 5;
-const int button = 4;
+const int pwm = 5;
+const int dir = 4;
+const int button = 0;
 
 boolean pressed = false;
 
@@ -84,8 +85,9 @@ void SetupWebServer()
 
 void SetupIO()
 {
-  pinMode(drive, OUTPUT);
-  pinMode(button, INPUT);
+  pinMode(pwn, OUTPUT);
+  pinMode(dir, OUTPUT);
+  pinMode(button, INPUT_PULLUP);
   Serial.println("IO Pins setup");
 }
 
@@ -115,11 +117,11 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 }
 
 void buttonHandler(){
-  if(digitalRead(button)==HIGH){
+  if(digitalRead(button)==LOW && !pressed){
     pressed=true;
-    drive("drive");
+    drive("forward");
   }
-  else if(digitalRead(button)==LOW && pressed){
+  else if(digitalRead(button)==HIGH && pressed){
     pressed=false;
     drive("stop");
   }
@@ -127,12 +129,16 @@ void buttonHandler(){
 
 void drive(const char * msg)
 {
-  if (strcmp(msg, "drive") == 0)
+  if (strcmp(msg, "forward") == 0)
   {
-    digitalWrite(drive, HIGH);
+    analogWrite(pwm, 1023);
+    digitalWrite(dir, HIGH);
+  }else if (strcmp(msg, "reverse") == 0)  {
+    analogWrite(pwm, 1023);
+    digitalWrite(dir, LOW);
   }
   else if (strcmp(msg, "stop") == 0)
   {
-    digitalWrite(drive, LOW);
+    analogWrite(pwm, 0);
   }
 }
