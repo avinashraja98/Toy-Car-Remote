@@ -17,7 +17,11 @@ webpage
 
 const int pwm = 5;
 const int dir = 4;
-const int button = 0;
+
+const int steer_pwm = 14;
+const int steer_dir = 12;
+
+const int button = 16;
 
 boolean pressed = false;
 
@@ -31,7 +35,8 @@ void ServeWebPage();
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 void buttonHandler();
-void drive(const char * msg);
+void drive(String msg);
+void stop_drive(String msg);
 
 void setup()
 {
@@ -85,9 +90,11 @@ void SetupWebServer()
 
 void SetupIO()
 {
-  pinMode(pwn, OUTPUT);
+  pinMode(pwm, OUTPUT);
   pinMode(dir, OUTPUT);
-  pinMode(button, INPUT_PULLUP);
+  pinMode(steer_pwm, OUTPUT);
+  pinMode(steer_dir, OUTPUT);
+  pinMode(button, INPUT);
   Serial.println("IO Pins setup");
 }
 
@@ -107,9 +114,31 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   case WStype_CONNECTED:
     break;
   case WStype_TEXT:
+  {
     Serial.printf("[%u] get Text: %s\r\n", num, payload);
-    drive((const char *)payload);
+    char *msg;
+    
+     Serial.println(strlen((const char*)payload));
+      //for(int i=0;i<strlen((const char*)payload);i++)
+      //temp[i]=payload[i];
+      String temp = (char*)payload;
+     String msg_prefix = temp.substring(0,5);
+    
+     Serial.println(msg_prefix);
+    //Serial.println(msg);
+
+    //char msg_prefix_test[]="stop_";
+    
+    if(msg_prefix=="stop_")
+    stop_drive(temp.substring(5,temp.length()));
+    else
+    drive(temp);
+    /*for(int i=0;i<20;i++)
+    {
+      msg[i]=msg_prefix[i]='';
+    }*/
     break;
+  }
   default:
     Serial.printf("Invalid WStype [%d]\r\n", type);
     break;
@@ -123,22 +152,38 @@ void buttonHandler(){
   }
   else if(digitalRead(button)==HIGH && pressed){
     pressed=false;
-    drive("stop");
+    stop_drive("forward");
   }
 }
 
-void drive(const char * msg)
+void drive(String msg)
 {
-  if (strcmp(msg, "forward") == 0)
+  if (msg=="forward")
   {
     analogWrite(pwm, 1023);
     digitalWrite(dir, HIGH);
-  }else if (strcmp(msg, "reverse") == 0)  {
+  }else if (msg=="reverse")  {
     analogWrite(pwm, 1023);
     digitalWrite(dir, LOW);
+  }else if (msg=="left")  {
+    analogWrite(steer_pwm, 1023);
+    digitalWrite(steer_dir, LOW);
+  }else if (msg=="right")  {
+    analogWrite(steer_pwm, 1023);
+    digitalWrite(steer_dir, HIGH);
   }
-  else if (strcmp(msg, "stop") == 0)
+}
+
+void stop_drive(String msg){
+
+  if (msg=="forward")
   {
     analogWrite(pwm, 0);
+  }else if (msg=="reverse")  {
+    analogWrite(pwm, 0);
+  }else if (msg=="left")  {
+    analogWrite(steer_pwm, 0);
+  }else if (msg=="right")  {
+    analogWrite(steer_pwm, 0);
   }
 }
