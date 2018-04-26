@@ -119,24 +119,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     char *msg;
     
      Serial.println(strlen((const char*)payload));
-      //for(int i=0;i<strlen((const char*)payload);i++)
-      //temp[i]=payload[i];
+    
       String temp = (char*)payload;
      String msg_prefix = temp.substring(0,5);
     
      Serial.println(msg_prefix);
-    //Serial.println(msg);
-
-    //char msg_prefix_test[]="stop_";
     
     if(msg_prefix=="stop_")
     stop_drive(temp.substring(5,temp.length()));
     else
     drive(temp);
-    /*for(int i=0;i<20;i++)
-    {
-      msg[i]=msg_prefix[i]='';
-    }*/
+    
     break;
   }
   default:
