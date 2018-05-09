@@ -1,8 +1,9 @@
 #include <WebSockets.h>
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>  
+#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
+#include <Servo.h>
 
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 2);
@@ -18,8 +19,11 @@ webpage
 const int pwm = 5;
 const int dir = 4;
 
+Servo steer_servo;
 const int steer_pwm = 14;
-const int steer_dir = 12;
+int angle=0;
+boolean left=false;
+boolean right=false;
 
 const int button = 16;
 
@@ -36,6 +40,7 @@ void ServeWebPage();
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 void buttonHandler();
 void drive(String msg);
+void steerHandler();
 void stop_drive(String msg);
 
 void setup()
@@ -53,6 +58,7 @@ void setup()
 void loop() {
   server.handleClient();
   webSocket.loop();
+  steerHandler();
   buttonHandler();
 }
 
@@ -92,8 +98,7 @@ void SetupIO()
 {
   pinMode(pwm, OUTPUT);
   pinMode(dir, OUTPUT);
-  pinMode(steer_pwm, OUTPUT);
-  pinMode(steer_dir, OUTPUT);
+  steer_servo.attach(steer_pwm);
   pinMode(button, INPUT);
   Serial.println("IO Pins setup");
 }
@@ -159,11 +164,21 @@ void drive(String msg)
     analogWrite(pwm, 1023);
     digitalWrite(dir, LOW);
   }else if (msg=="left")  {
-    analogWrite(steer_pwm, 1023);
-    digitalWrite(steer_dir, LOW);
+left=true;
   }else if (msg=="right")  {
-    analogWrite(steer_pwm, 1023);
-    digitalWrite(steer_dir, HIGH);
+right=true;
+  }
+}
+
+void steerHandler(){
+  if(left){
+    angle=angle+1;
+    steer_servo.write(angle);  
+  }
+  else if(right)
+  {
+    angle=angle-1;
+    steer_servo.write(angle);  
   }
 }
 
@@ -175,8 +190,8 @@ void stop_drive(String msg){
   }else if (msg=="reverse")  {
     analogWrite(pwm, 0);
   }else if (msg=="left")  {
-    analogWrite(steer_pwm, 0);
+    left=false;
   }else if (msg=="right")  {
-    analogWrite(steer_pwm, 0);
+    right=false;
   }
 }
