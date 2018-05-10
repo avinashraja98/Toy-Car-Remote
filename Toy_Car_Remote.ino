@@ -172,13 +172,15 @@ right=true;
 
 void steerHandler(){
   if(left){
-    angle=angle+1;
+    angle=angle+0.1;
     steer_servo.write(angle);  
+    delay(100);
   }
   else if(right)
   {
-    angle=angle-1;
+    angle=angle-0.1;
     steer_servo.write(angle);  
+    delay(100);
   }
 }
 
