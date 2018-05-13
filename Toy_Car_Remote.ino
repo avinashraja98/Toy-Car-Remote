@@ -21,9 +21,6 @@ const int dir = 4;
 
 Servo steer_servo;
 const int steer_pwm = 14;
-int angle=0;
-boolean left=false;
-boolean right=false;
 
 const int button = 16;
 
@@ -40,7 +37,7 @@ void ServeWebPage();
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 void buttonHandler();
 void drive(String msg);
-void steerHandler();
+void turn(String msg);
 void stop_drive(String msg);
 
 void setup()
@@ -58,7 +55,6 @@ void setup()
 void loop() {
   server.handleClient();
   webSocket.loop();
-  steerHandler();
   buttonHandler();
 }
 
@@ -132,6 +128,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     
     if(msg_prefix=="stop_")
     stop_drive(temp.substring(5,temp.length()));
+    else if(msg_prefix=="slid_")
+    turn(temp.substring(5,temp.length()));
     else
     drive(temp);
     
@@ -160,40 +158,22 @@ void drive(String msg)
   {
     analogWrite(pwm, 1023);
     digitalWrite(dir, HIGH);
-  }else if (msg=="reverse")  {
+  }else if (msg=="reverse"){
     analogWrite(pwm, 1023);
     digitalWrite(dir, LOW);
-  }else if (msg=="left")  {
-left=true;
-  }else if (msg=="right")  {
-right=true;
   }
 }
 
-void steerHandler(){
-  if(left){
-    angle=angle+0.1;
-    steer_servo.write(angle);  
-    delay(100);
-  }
-  else if(right)
-  {
-    angle=angle-0.1;
-    steer_servo.write(angle);  
-    delay(100);
-  }
+void turn(String msg){
+  steer_servo.write(msg.toInt());
 }
 
-void stop_drive(String msg){
-
+void stop_drive(String msg)
+{
   if (msg=="forward")
   {
     analogWrite(pwm, 0);
-  }else if (msg=="reverse")  {
+  }else if (msg=="reverse"){
     analogWrite(pwm, 0);
-  }else if (msg=="left")  {
-    left=false;
-  }else if (msg=="right")  {
-    right=false;
   }
 }
