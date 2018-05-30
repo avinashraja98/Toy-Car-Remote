@@ -23,6 +23,8 @@ Servo steer_servo;
 const int steer_pwm = 14;
 
 const int button = 16;
+int buttonEnabled = 1;
+int buttonDir = 1;
 
 boolean pressed = false;
 
@@ -36,6 +38,8 @@ void ServeWebPage();
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 void buttonHandler();
+void setButton(String msg);
+void setButtonDir(String msg);
 void drive(String msg);
 void turn(String msg);
 void stop_drive(String msg);
@@ -116,24 +120,28 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     break;
   case WStype_TEXT:
   {
-    Serial.printf("[%u] get Text: %s\r\n", num, payload);
-    char *msg;
-    
-     Serial.println(strlen((const char*)payload));
-    
-      String temp = (char*)payload;
-     String msg_prefix = temp.substring(0,5);
-    
-     Serial.println(msg_prefix);
-    
-    if(msg_prefix=="stop_")
-    stop_drive(temp.substring(5,temp.length()));
-    else if(msg_prefix=="slid_")
-    turn(temp.substring(5,temp.length()));
-    else
-    drive(temp);
-    
-    break;
+Serial.printf("[%u] get Text: %s\r\n", num, payload);
+char *msg;
+
+ Serial.println(strlen((const char*)payload));
+
+  String temp = (char*)payload;
+ String msg_prefix = temp.substring(0,5);
+
+ Serial.println(msg_prefix);
+
+if(msg_prefix=="stop_")
+stop_drive(temp.substring(5,temp.length()));
+else if(msg_prefix=="slid_")
+turn(temp.substring(5,temp.length()));
+else if(msg_prefix=="togg_")
+setButton(temp.substring(5,temp.length()));
+else if(msg_prefix=="bDir_")
+setButtonDir(temp.substring(5,temp.length()));
+else
+drive(temp);
+
+break;
   }
   default:
     Serial.printf("Invalid WStype [%d]\r\n", type);
@@ -141,14 +149,35 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   }
 }
 
+void setButton(String msg){
+  if(msg=="1")
+  buttonEnabled=1;
+  else if(msg=="0")
+  buttonEnabled=0;
+}
+
+void setButtonDir(String msg){
+  if(msg=="r")
+  buttonDir=1;
+  else if(msg=="l")
+  buttonDir=0;
+}
+
 void buttonHandler(){
-  if(digitalRead(button)==LOW && !pressed){
+  if(digitalRead(button)==LOW && !pressed && buttonEnabled){
     pressed=true;
+    if(buttonDir)
     drive("forward");
+    else
+    drive("reverse");
   }
-  else if(digitalRead(button)==HIGH && pressed){
+  else if(digitalRead(button)==HIGH && pressed && buttonEnabled){
     pressed=false;
+    if(buttonDir)
     stop_drive("forward");
+    else
+    stop_drive("reverse");
+    
   }
 }
 
