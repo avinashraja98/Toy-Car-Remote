@@ -22,7 +22,7 @@ const int dir = 4;
 Servo steer_servo;
 const int steer_pwm = 14;
 
-const int button = 16;
+const int button = 0;
 int buttonEnabled = 1;
 int buttonDir = 1;
 
@@ -99,7 +99,7 @@ void SetupIO()
   pinMode(pwm, OUTPUT);
   pinMode(dir, OUTPUT);
   steer_servo.attach(steer_pwm);
-  pinMode(button, INPUT);
+  pinMode(button, INPUT_PULLUP);
   Serial.println("IO Pins setup");
 }
 
@@ -176,8 +176,7 @@ void buttonHandler(){
     if(buttonDir)
     stop_drive("forward");
     else
-    stop_drive("reverse");
-    
+    stop_drive("reverse"); 
   }
 }
 
