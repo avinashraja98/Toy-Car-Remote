@@ -22,6 +22,8 @@ const int dir = 4;
 Servo steer_servo;
 const int steer_pwm = 14;
 
+int speed = 1023;
+
 const int button = 0;
 int buttonEnabled = 1;
 int buttonDir = 1;
@@ -138,6 +140,8 @@ else if(msg_prefix=="togg_")
 setButton(temp.substring(5,temp.length()));
 else if(msg_prefix=="bDir_")
 setButtonDir(temp.substring(5,temp.length()));
+else if(msg_prefix=="sped_")
+speed = atoi(temp.substring(5,temp.length())); //setSpeed
 else
 drive(temp);
 
@@ -149,6 +153,10 @@ break;
   }
 }
 
+void setSpeed(String msg){
+	
+}
+	
 void setButton(String msg){
   if(msg=="1")
   buttonEnabled=1;
@@ -184,10 +192,10 @@ void drive(String msg)
 {
   if (msg=="forward")
   {
-    analogWrite(pwm, 1023);
+    analogWrite(pwm, speed);
     digitalWrite(dir, HIGH);
   }else if (msg=="reverse"){
-    analogWrite(pwm, 1023);
+    analogWrite(pwm, speed);
     digitalWrite(dir, LOW);
   }
 }
