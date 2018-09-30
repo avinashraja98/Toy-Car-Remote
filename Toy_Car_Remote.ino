@@ -35,7 +35,7 @@ int buttonDir = 1;
 
 boolean pressed = false;
 boolean connected = false;
-boolean drive = false;
+boolean driving = false;
 
 void SetupAP();
 void SetupDNS();
@@ -70,7 +70,7 @@ void loop() {
   webSocket.loop();
   buttonHandler();
 	
-  if(drive && !connected) {
+  if(driving && !connected) {
     stop_drive("forward");	  
   }
 }
@@ -170,10 +170,6 @@ break;
   }
 }
 
-void setSpeed(String msg){
-	
-}
-	
 void setButton(String msg){
   if(msg=="1")
   buttonEnabled=1;
@@ -211,11 +207,11 @@ void drive(String msg)
   {
     analogWrite(pwm, speed);
     digitalWrite(dir, HIGH);
-    drive = true;
+    driving = true;
   }else if (msg=="reverse"){
     analogWrite(pwm, speed);
     digitalWrite(dir, LOW);
-    drive = true;
+    driving = true;
   }
 }
 
@@ -231,5 +227,5 @@ void stop_drive(String msg)
   }else if (msg=="reverse"){
     analogWrite(pwm, 0);
   }
-  drive = false;
+  driving = false;
 }
