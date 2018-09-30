@@ -158,7 +158,7 @@ setButton(temp.substring(5,temp.length()));
 else if(msg_prefix=="bDir_")
 setButtonDir(temp.substring(5,temp.length()));
 else if(msg_prefix=="sped_")
-speed = atoi(temp.substring(5,temp.length())); //setSpeed
+speed = atoi(temp.substring(5,temp.length()).c_str()); //setSpeed
 else
 drive(temp);
 
