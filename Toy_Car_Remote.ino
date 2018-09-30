@@ -5,6 +5,11 @@
 #include <WebSocketsServer.h>
 #include <Servo.h>
 
+#define pwm 5			// pwm pin
+#define dir 4			// dir pin
+#define steer_pwm 14		// pwm pin for the steering servo motor
+#define button 0		// pin for the big red button
+
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 2);
 IPAddress subnet(255, 255, 255, 0);
@@ -16,19 +21,21 @@ const char index_page[] PROGMEM = R"rawliteral(
 webpage
 )rawliteral";
 
-const int pwm = 5;
-const int dir = 4;
+//const int pwm = 5;
+//const int dir = 4;
 
 Servo steer_servo;
-const int steer_pwm = 14;
+//const int steer_pwm = 14;
 
 int speed = 1023;
 
-const int button = 0;
+//const int button = 0;
 int buttonEnabled = 1;
 int buttonDir = 1;
 
 boolean pressed = false;
+boolean connected = false;
+boolean drive = false;
 
 void SetupAP();
 void SetupDNS();
@@ -62,6 +69,10 @@ void loop() {
   server.handleClient();
   webSocket.loop();
   buttonHandler();
+	
+  if(drive && !connected) {
+    stop_drive("forward");	  
+  }
 }
 
 void ServeWebPage() {
@@ -116,10 +127,16 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
   switch (type) {
   case WStype_DISCONNECTED:
+  {
+    connected = false;
     Serial.printf("[%u] Disconnected!\r\n", num);
     break;
+  }		  
   case WStype_CONNECTED:
+  {
+    connected = true;
     break;
+  }
   case WStype_TEXT:
   {
 Serial.printf("[%u] get Text: %s\r\n", num, payload);
@@ -194,9 +211,11 @@ void drive(String msg)
   {
     analogWrite(pwm, speed);
     digitalWrite(dir, HIGH);
+    drive = true;
   }else if (msg=="reverse"){
     analogWrite(pwm, speed);
     digitalWrite(dir, LOW);
+    drive = true;
   }
 }
 
@@ -212,4 +231,5 @@ void stop_drive(String msg)
   }else if (msg=="reverse"){
     analogWrite(pwm, 0);
   }
+  drive = false;
 }
