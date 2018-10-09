@@ -5,10 +5,10 @@
 #include <WebSocketsServer.h>
 #include <Servo.h>
 
-#define pwm 5			// pwm pin
-#define dir 4			// dir pin
-#define steer_pwm 14		// pwm pin for the steering servo motor
-#define button 0		// pin for the big red button
+#define pwm 5      // pwm pin
+#define dir 4     // dir pin
+#define steer_pwm 14    // pwm pin for the steering servo motor
+#define button 0    // pin for the big red button
 
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 2);
@@ -34,8 +34,9 @@ int buttonEnabled = 1;
 int buttonDir = 1;
 
 boolean pressed = false;
-boolean connected = false;
 boolean driving = false;
+
+unsigned long startTime = 0;
 
 void SetupAP();
 void SetupDNS();
@@ -69,9 +70,11 @@ void loop() {
   server.handleClient();
   webSocket.loop();
   buttonHandler();
-	
-  if(driving && !connected) {
-    stop_drive("forward");	  
+
+  if(driving)
+  if((millis()-startTime)>1200) {
+    Serial.print("Timeout");
+    stop_drive("forward");    
   }
 }
 
@@ -128,13 +131,11 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   switch (type) {
   case WStype_DISCONNECTED:
   {
-    connected = false;
     Serial.printf("[%u] Disconnected!\r\n", num);
     break;
-  }		  
+  }     
   case WStype_CONNECTED:
   {
-    connected = true;
     break;
   }
   case WStype_TEXT:
@@ -150,7 +151,10 @@ char *msg;
  Serial.println(msg_prefix);
 
 if(msg_prefix=="stop_")
+{
 stop_drive(temp.substring(5,temp.length()));
+driving = false;
+}
 else if(msg_prefix=="slid_")
 turn(temp.substring(5,temp.length()));
 else if(msg_prefix=="togg_")
@@ -159,8 +163,16 @@ else if(msg_prefix=="bDir_")
 setButtonDir(temp.substring(5,temp.length()));
 else if(msg_prefix=="sped_")
 speed = atoi(temp.substring(5,temp.length()).c_str()); //setSpeed
+else if(msg_prefix.substring(1,4)=="tick")
+{
+  startTime = millis();
+}
 else
+{
 drive(temp);
+driving = true;
+startTime = millis();
+}
 
 break;
   }
@@ -207,11 +219,9 @@ void drive(String msg)
   {
     analogWrite(pwm, speed);
     digitalWrite(dir, HIGH);
-    driving = true;
   }else if (msg=="reverse"){
     analogWrite(pwm, speed);
-    digitalWrite(dir, LOW);
-    driving = true;
+    digitalWrite(dir, LOW);    
   }
 }
 
@@ -227,5 +237,4 @@ void stop_drive(String msg)
   }else if (msg=="reverse"){
     analogWrite(pwm, 0);
   }
-  driving = false;
 }
