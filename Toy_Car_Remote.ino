@@ -10,6 +10,8 @@
 #define steer_pwm 14    // pwm pin for the steering servo motor
 #define button 0    // pin for the big red button
 
+//#define heartbeat
+
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 2);
 IPAddress subnet(255, 255, 255, 0);
@@ -71,11 +73,13 @@ void loop() {
   webSocket.loop();
   buttonHandler();
 
+#ifdef heartbeat
   if(driving)
   if((millis()-startTime)>1200) {
     Serial.print("Timeout");
     stop_drive("forward");    
   }
+#endif  
 }
 
 void ServeWebPage() {
