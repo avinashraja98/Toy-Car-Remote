@@ -171,11 +171,15 @@ else if(msg_prefix.substring(1,4)=="tick")
 {
   startTime = millis();
 }
-else
+else if(temp=="forward" || temp=="reverse")
 {
 drive(temp);
 driving = true;
 startTime = millis();
+}
+else
+{
+  // Do Nothing!!!
 }
 
 break;
